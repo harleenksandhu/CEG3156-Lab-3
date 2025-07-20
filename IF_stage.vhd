@@ -5,10 +5,10 @@ use ieee.std_logic_1164.all;
 entity IF_stage is 
 	port(GClk, GReset: in std_logic;
 			PCSrc, IF_Flush: in std_logic; -- From Control Unit
-			PCWrite, IFIDWrite: in std_logic; -- From Hazard Detection Unit
+			PCWrite: in std_logic; -- From Hazard Detection Unit
 			branchAddress: in std_logic_vector(7 downto 0);
-			IFID_PCOut: out std_logic_vector(7 downto 0);
-			IFID_InstructionOut: out std_logic_vector(31 downto 0));
+			IFID_PCIn: out std_logic_vector(7 downto 0);
+			IFID_InstructionIn: out std_logic_vector(31 downto 0));
 end IF_stage;
 
 
@@ -83,14 +83,12 @@ InstructionMemory: lpm_rom
         q       => int_instruction
     );
 
-IFID_reg: nbitreg
-	generic map(n => 40)
-	port map(reset_b => GReset_b, din(39 downto 32) => int_PCOut, din(31 downto 0) => int_instruction, 
-			   load => IFIDWrite, clk => GClk, dout(39 downto 32) => IFID_PCOut, dout(31 downto 0) => IFID_InstructionOut, dout_b => open);
 
 	
-	
 GReset_b <= NOT GReset;
+
+IFID_PCIn <= int_PCIncremented;
+IFID_InstructionIn <= int_instruction;
 
 end rtl;
 			
