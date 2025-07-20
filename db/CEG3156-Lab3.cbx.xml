@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<LOG_ROOT>
+	<PROJECT NAME="CEG3156-Lab3">
+		<CBX_INST_ENTRY INSTANCE_NAME="|IF_stage|lpm_rom:InstructionMemory|altrom:srom|altsyncram:rom_block" CBX_FILE_NAME="altsyncram_9f01.tdf"/>
+	</PROJECT>
+</LOG_ROOT>
