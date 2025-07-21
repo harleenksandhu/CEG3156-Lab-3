@@ -13,16 +13,19 @@ architecture rtl of processor_top is
     signal int_pcout, int_aluresult, int_readdata1, int_readdata2, int_writedata : std_logic_vector(7 downto 0);
     signal int_instruction : std_logic_vector(31 downto 0);
     signal greset_b, int_jump, int_zero: std_logic;
-	 signal int_WB: std_logic_vector(1 downto 0);
-	 signal int_M: std_logic_vector(2 downto 0);
-	 signal int_EX: std_logic_vector(3 downto 0);
+	signal int_WB: std_logic_vector(1 downto 0);
+	signal int_M: std_logic_vector(2 downto 0);
+	signal int_EX: std_logic_vector(3 downto 0);
     signal int_aluop, int_alufunc: std_logic_vector(1 downto 0);
     signal int_controlinfo : std_logic_vector(7 downto 0);
 	 
-	 
-	 --for HDU and Forwarding unit (still need to implement)
-	 signal int_PCWrite, int_IFIDWrite: std_logic;
-	 signal int_forward: std_logic;
+	-- Hazard Detection Unit and Forwarding Unit internal signals
+	signal int_PCWrite, int_IFIDWrite: std_logic;
+	signal int_IFID_Rs, int_IFID_Rt, int_IDEX_Rt, int_IDEX_Rs: std_logic_vector(4 downto 0);
+	signal int_EXMEM_Rd, int_MEMWB_Rd: std_logic_vector(4 downto 0);
+	signal int_EXMEM_WB, int_MEMWB_WB: std_logic_vector(1 downto 0);
+	signal int_selControl: std_logic;
+	signal int_ForwardA, int_ForwardB: std_logic_vector(1 downto 0);
 
 component nbit8to1mux
     GENERIC(n: integer:=8);
@@ -46,10 +49,24 @@ end component;
 
 component main_control
     port(Instruction: in std_logic_vector(31 downto 0); 
+	     selControl: in std_logic;   
          Jump: out std_logic;     
          EX: out std_logic_vector(3 downto 0);     -- EX = RegDst, ALUOp1, ALUOp0, ALUSrc
          MEM: out std_logic_vector(2 downto 0);    -- MEM = Branch, MemRead, MemWrite
          WB: out std_logic_vector(1 downto 0));    -- WB = RegWrite, MemtoReg
+end component;
+
+component hazard_detect_unit
+    port(
+        IDEX_M, EXMEM_M: std_logic_vector(2 downto 0);
+        IDEX_Rt, IFID_Rs, IFID_Rt: in std_logic_vector(4 downto 0);
+        PCWrite, IFID_Write, selControl: out std_logic);
+end component;
+
+component forwarding_unit
+    port(EXMEM_WB, MEMWB_WB: in std_logic_vector(1 downto 0);       -- WB = RegWrite, MemtoReg
+         IDEX_Rs, IDEX_Rt, EXMEM_Rd, MEMWB_Rd: in std_logic_vector(4 downto 0);
+         selForwardA, selFordwardB: out std_logic_vector(1 downto 0));   
 end component;
 
 
@@ -57,12 +74,38 @@ begin
 
 control: main_control
     port map(Instruction => int_instruction, 
+		 selControl => int_selControl,
          Jump => int_jump,    --HOW DOES JUMP WORK FOR PIPELINE??? 
          EX => int_EX,     
          MEM => int_M,    
          WB => int_WB    
+    );	
+
+
+hazardDetection: hazard_detect_unit
+    port map (
+        IDEX_M      => int_M,
+        EXMEM_M     => int_M,  -- or another EXMEM_M signal if pipelined
+        IDEX_Rt     => int_IDEX_Rt,
+        IFID_Rs     => int_IFID_Rs,
+        IFID_Rt     => int_IFID_Rt,
+        PCWrite     => int_PCWrite,
+        IFID_Write  => int_IFIDWrite,
+        selControl  => int_selControl
     );
 
+
+forwardingUnit : forwarding_unit
+    port map (
+        EXMEM_WB     => int_EXMEM_WB,
+        MEMWB_WB     => int_MEMWB_WB,
+        IDEX_Rs      => int_IDEX_Rs,
+        IDEX_Rt      => int_IDEX_Rt,
+        EXMEM_Rd     => int_EXMEM_Rd,
+        MEMWB_Rd     => int_MEMWB_Rd,
+        selForwardA  => int_ForwardA,
+        selFordwardB => int_ForwardB
+    );
 
 
 datapath: pipeline_datapath
@@ -72,10 +115,10 @@ datapath: pipeline_datapath
 				WB => int_WB, -- from control unit
 				M => int_M,  -- from control unit
 				EX => int_EX, -- from control unit
-				PCWrite => '1', --STILL NEED TO CONNECT TO HDU
-				IFIDWrite => '1', --STILL NEED TO CONNECT TO HDU
-				ForwardA => "00", --STILL NEED TO CONNECT TO FORWARDING UNIT
-				ForwardB => "00",
+				PCWrite      => int_PCWrite,
+				IFIDWrite    => int_IFIDWrite,
+				ForwardA     => int_ForwardA,
+				ForwardB     => int_ForwardB,
 				InstructionOut => int_instruction, 
 				PCOut => int_pcout,
 			   ALUResult => int_aluresult,
