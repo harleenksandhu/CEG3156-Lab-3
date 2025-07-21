@@ -1,6 +1,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+library altera_mf;
+library lpm;
+use lpm.lpm_components.all;
+
 
 entity IF_stage is 
 	port(GClk, GReset: in std_logic;
@@ -14,7 +18,6 @@ end IF_stage;
 
 architecture rtl of IF_stage is
 signal int_PCOut, int_PCIncremented, int_PCIn: std_logic_vector(7 downto 0);
-signal int_instruction: std_logic_vector(31 downto 0);
 signal GReset_b: std_logic;
 
 component lpm_rom
@@ -73,22 +76,23 @@ PCAdder: nbitaddersubtractor
 InstructionMemory: lpm_rom
     generic map (
         LPM_WIDTH   => 32,
-        LPM_WIDTHAD => 6,
-        LPM_FILE    => "rom_init.mif",
+        LPM_WIDTHAD => 8,
+        LPM_FILE    => "rom2_init.mif",
         LPM_OUTDATA => "UNREGISTERED"
     )
     port map (
-        address => int_PCOut(7 downto 2),
+        address => int_PCOut,
         inclock => GClk,
-        q       => int_instruction
+        q       => IFID_InstructionIn
     );
 
 
 	
 GReset_b <= NOT GReset;
 
+
 IFID_PCIn <= int_PCIncremented;
-IFID_InstructionIn <= int_instruction;
+
 
 end rtl;
 			

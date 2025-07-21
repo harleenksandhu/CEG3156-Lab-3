@@ -1,6 +1,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+library altera_mf;
+library lpm;
+use lpm.lpm_components.all;
+
 entity MEM_stage is
 	port(GClk: in std_logic; 
 		  EXMEM_M: in std_logic_vector(2 downto 0);
