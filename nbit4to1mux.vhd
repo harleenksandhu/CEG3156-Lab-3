@@ -3,9 +3,9 @@ USE ieee.std_logic_1164.ALL;
 
 ENTITY nbit4to1mux IS 
 	GENERIC(n: integer:=8);
-	PORT ( i_0, i_1, i_2, i_3: IN std_logic;
+	PORT ( i_0, i_1, i_2, i_3: IN std_logic_vector(n-1 downto 0);
 			 sel1, sel2 : IN std_logic;
-			 o : OUT std_logic);
+			 o : OUT std_logic_vector(n-1 downto 0));
 END nbit4to1mux;
 
 ARCHITECTURE behav of nbit4to1mux IS
