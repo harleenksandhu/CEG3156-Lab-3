@@ -19,8 +19,8 @@ entity EX_stage is
 end EX_stage; 
 
 architecture rtl of EX_stage is
-signal int_ALUOperation: std_logic_vector(1 downto 0);
-signal operA, operB, operBMux0, int_ALUResult, shftedData: std_logic_vector(7 downto 0);
+signal int_ALUOperation, int_ALUEXOP: std_logic_vector(1 downto 0);
+signal operA, operB, operBMux0, shftedData: std_logic_vector(7 downto 0);
 
 component nbit2to1mux
    GENERIC(n: integer:=8);
@@ -66,7 +66,7 @@ end component;
 begin
 
 control: alucontrol 
-	port map(ALUOp(1) => IDEX_EX(2), ALUOp(0) => IDEX_EX(1), FunctionCode => SignExtData(5 downto 0), ALUFunc => int_ALUOperation);
+	port map(ALUOp => int_ALUEXOP, FunctionCode => SignExtData(5 downto 0), ALUFunc => int_ALUOperation);
 
 OperandAMux: nbit4to1mux
 	generic map(n => 8)
@@ -82,7 +82,7 @@ OperandBMux: nbit4to1mux
 	
 	
 ALU: eightbitalu
-	port map(operA, operB, int_ALUOperation, int_ALUResult, open, Zero);
+	port map(operA, operB, int_ALUOperation, ALUResult, open, Zero);
 	
 BTA_adder: nbitaddersubtractor
 	generic map(n => 8)
@@ -94,6 +94,7 @@ DestinationMux: nbit2to1mux
 	port map(i_0 => Rt, i_1 => Rd, sel1 => IDEX_EX(3), o => DestinationReg);
 
 shftedData <= SignExtData(5 downto 0) & "00";
+int_ALUEXOP <= IDEX_EX(2) & IDEX_EX(1);
 
 MemWriteData <= ReadData2;
 

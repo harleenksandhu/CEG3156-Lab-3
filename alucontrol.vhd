@@ -19,11 +19,11 @@ F2 <= FunctionCode(2);
 F3 <= FunctionCode(3);
 
 ALUFunc(1) <= '0' when ALUOp = "00" else 
-              '0' when ALUOp = "X1" else  
+              '0' when (ALUOp = "01" OR ALUOp = "11") else  
               (ALUOp(1) and (not F3) and F2 and (not F1)); 
 
 ALUFunc(0) <= '0' when ALUOp = "00" else  
-              '1' when ALUOp = "X1" else
+              '1' when (ALUOp = "01" OR ALUOp = "11") else
               (ALUOp(1) and (not F3) and (not F2) and F1 and (not F0)) 
             or (ALUOp(1) and (not F3) and F2 and (not F1) and F0);
 
