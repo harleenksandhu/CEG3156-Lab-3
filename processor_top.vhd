@@ -14,9 +14,8 @@ architecture rtl of processor_top is
     signal int_instruction : std_logic_vector(31 downto 0);
     signal greset_b, int_jump, int_zero: std_logic;
 	signal int_WB: std_logic_vector(1 downto 0);
-	signal int_M: std_logic_vector(2 downto 0);
+	signal int_M, int_IDEX_M, int_EXMEM_M: std_logic_vector(2 downto 0);
 	signal int_EX: std_logic_vector(3 downto 0);
-    signal int_aluop, int_alufunc: std_logic_vector(1 downto 0);
     signal int_controlinfo : std_logic_vector(7 downto 0);
 	 
 	-- Hazard Detection Unit and Forwarding Unit internal signals
@@ -44,7 +43,11 @@ component pipeline_datapath
 			ForwardA, ForwardB: in std_logic_vector(1 downto 0); --from forwarding unit
 			InstructionOut: out std_logic_vector(31 downto 0);
 			PCOut, ALUResult, ReadData1, ReadData2, WriteData: out std_logic_vector(7 downto 0); 
-			ZeroOut: out std_logic);
+			ZeroOut: out std_logic;
+			o_IDEX_M, o_EXMEM_M: out std_logic_vector(2 downto 0);
+         o_IDEX_Rt, o_IFID_Rs, o_IFID_Rt: out std_logic_vector(4 downto 0);
+			o_EXMEM_WB, o_MEMWB_WB: out std_logic_vector(1 downto 0);       -- WB = RegWrite, MemtoReg
+         o_IDEX_Rs, o_EXMEM_Rd, o_MEMWB_Rd: out std_logic_vector(4 downto 0));
 end component;
 
 component main_control
@@ -58,7 +61,7 @@ end component;
 
 component hazard_detect_unit
     port(
-        IDEX_M, EXMEM_M: std_logic_vector(2 downto 0);
+        IDEX_M, EXMEM_M: in std_logic_vector(2 downto 0);
         IDEX_Rt, IFID_Rs, IFID_Rt: in std_logic_vector(4 downto 0);
         PCWrite, IFID_Write, selControl: out std_logic);
 end component;
@@ -84,8 +87,8 @@ control: main_control
 
 hazardDetection: hazard_detect_unit
     port map (
-        IDEX_M      => int_M,
-        EXMEM_M     => int_M,  -- or another EXMEM_M signal if pipelined
+        IDEX_M      => int_IDEX_M,
+        EXMEM_M     => int_EXMEM_M,  -- or another EXMEM_M signal if pipelined
         IDEX_Rt     => int_IDEX_Rt,
         IFID_Rs     => int_IFID_Rs,
         IFID_Rt     => int_IFID_Rt,
@@ -125,7 +128,17 @@ datapath: pipeline_datapath
 			   ReadData1 => int_readdata1,
 			   ReadData2 => int_readdata2,
 			   WriteData => int_writedata,
-				ZeroOut => int_zero);
+				ZeroOut => int_zero,
+				o_IDEX_M => int_IDEX_M, 
+				o_EXMEM_M => int_EXMEM_M,
+				o_IDEX_Rt => int_IDEX_Rt,
+				o_IFID_Rs => int_IFID_Rs,
+				o_IFID_Rt => int_IFID_Rt,
+				o_EXMEM_WB => int_EXMEM_WB,
+				o_MEMWB_WB => int_MEMWB_WB,
+				o_IDEX_Rs  => int_IDEX_Rs,
+				o_EXMEM_Rd => int_EXMEM_Rd,
+				o_MEMWB_Rd => int_MEMWB_Rd );
 
 int_controlinfo <= '0' & int_EX(2) & int_jump & int_M(1) & int_WB(0) & int_EX(2) & int_EX(1) & int_EX(0);
 
